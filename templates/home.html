@@ -151,35 +151,12 @@
 
             <form action="{{ url_for('predict') }}" method="post">
 
+                {% for feature in features %}
                 <div class="form-group">
-                    <label>Line Speed (m/min)</label>
-                    <input type="number" step="any" name="LINE_SPEED" value="{{ line_speed|default('') }}" required>
+                    <label>{{ feature }}</label>
+                    <input type="number" step="any" name="{{ feature }}" required>
                 </div>
-
-                <div class="form-group">
-                    <label>Strip Thickness (mm)</label>
-                    <input type="number" step="any" name="THICKNESS" value="{{ thickness|default('') }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Strip Width (mm)</label>
-                    <input type="number" step="any" name="WIDTH" value="{{ width|default('') }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Coil Weight (Ton)</label>
-                    <input type="number" step="any" name="COIL_WEIGHT" value="{{ coil_weight|default('') }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Coil Length (m)</label>
-                    <input type="number" step="any" name="COIL_LENGTH" value="{{ coil_length|default('') }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Furnace Code (NO1_ANLNG_CD)</label>
-                    <input type="number" step="any" name="FURNACE_CODE" value="{{ furnace_code|default('') }}" required>
-                </div>
+                {% endfor %}
 
                 <!-- TOMBOL PREDIKSI -->
                 <button type="submit" class="btn">

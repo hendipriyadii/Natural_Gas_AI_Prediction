@@ -61,10 +61,6 @@ MODEL_FILE = os.getenv("MODEL_FILE", str(BASE_DIR / "linear_regression_model.pkl
 SCALER_FILE = os.getenv("SCALER_FILE", str(BASE_DIR / "scaler.pkl"))
 COLUMNS_FILE = os.getenv("COLUMNS_FILE", str(BASE_DIR / "training_columns.pkl"))
 
-regmodel = joblib.load(MODEL_FILE)
-scalar = joblib.load(SCALER_FILE)
-training_columns = joblib.load(COLUMNS_FILE)
-
 PORT = int(os.getenv("PORT", "5000"))
 FLASK_ENV = os.getenv("FLASK_ENV", "production")
 
@@ -124,11 +120,9 @@ logger.info(f"Model File  : {MODEL_FILE}")
 logger.info(f"Scaler File : {SCALER_FILE}")
 
 try:
-    with open(SCALER_FILE, "rb") as f:
-        scalar = pickle.load(f)
-
-    with open(MODEL_FILE, "rb") as f:
-        regmodel = pickle.load(f)
+    regmodel = joblib.load(MODEL_FILE)
+    scalar = joblib.load(SCALER_FILE)
+    training_columns = joblib.load(COLUMNS_FILE)
 
     MODEL_READY = True
     logger.info("Machine Learning model loaded successfully.")
@@ -137,6 +131,7 @@ except Exception:
     MODEL_READY = False
     scalar = None
     regmodel = None
+    training_columns = None
     logger.exception("Failed to load Machine Learning model.")
 
 # ============================================================
@@ -266,16 +261,20 @@ def logout():
 
 
 # ============================================================
-# Home
+# Home (Disesuaikan agar mengirim features secara dinamis)
 # ============================================================
 
 @app.route("/")
 @login_required
 @monitor_endpoint("/")
 def home():
+    # Mengambil daftar fitur dari training_columns agar form HTML dinamis
+    features_list = list(training_columns) if training_columns is not None else []
+
     return render_template(
         "home.html",
         username=session.get("username"),
+        features=features_list,
     )
 
 
@@ -323,7 +322,6 @@ def predict_api():
             dtype=float,
         ).reshape(1, -1)
 
-        # Validasi jumlah feature jika scaler menyediakan informasi ini.
         expected_features = getattr(scalar, "n_features_in_", None)
         if (
             expected_features is not None
@@ -377,9 +375,11 @@ def predict():
     if not MODEL_READY:
         logger.error("Prediction requested but model is unavailable.")
 
+        features_list = list(training_columns) if training_columns is not None else []
         return render_template(
             "home.html",
             username=session.get("username"),
+            features=features_list,
             prediction_text="Machine Learning model is unavailable.",
         ), 503
 
@@ -417,12 +417,14 @@ def predict():
             prediction_value,
         )
 
+        features_list = list(training_columns) if training_columns is not None else []
         return render_template(
             "home.html",
             username=session.get("username"),
+            features=features_list,
             prediction_text=(
-                f"The House price prediction is "
-                f"{prediction_value}"
+                f"Prediksi Konsumsi Natural Gas adalah "
+                f"{prediction_value:.2f}"
             ),
         )
 
@@ -431,9 +433,11 @@ def predict():
 
         logger.exception("HTML prediction failed.")
 
+        features_list = list(training_columns) if training_columns is not None else []
         return render_template(
             "home.html",
             username=session.get("username"),
+            features=features_list,
             prediction_text=f"Error : {str(e)}",
         ), 400
 
@@ -504,11 +508,6 @@ def stress():
 
 @app.route("/metrics", methods=["GET"])
 def metrics():
-    """
-    Endpoint yang akan di-scrape oleh Prometheus.
-    Endpoint ini sengaja tidak menggunakan login_required
-    agar Prometheus dapat melakukan scraping langsung.
-    """
     return (
         generate_latest(),
         200,
