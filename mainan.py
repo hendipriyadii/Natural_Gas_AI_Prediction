@@ -2,6 +2,7 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from flask import Flask, request, jsonify, render_template
 
@@ -10,16 +11,17 @@ app = Flask(__name__)
 # ==========================================
 # 1. LOAD MODEL, SCALER, DAN TRAINING COLUMNS
 # ==========================================
-MODEL_DIR = r"C:\Users\vb217249\OneDrive - PT.JFE Steel Galvanizing Indonesia\Training AI Engineer\PROJECT_AI\notebook"
+# Dapatkan direktori tempat file mainan.py berada
+BASE_DIR = Path(__file__).resolve().parent
 
-MODEL_FILE = os.getenv("MODEL_FILE", os.path.join(MODEL_DIR, "linear_regression_model.pkl"))
-SCALER_FILE = os.getenv("SCALER_FILE", os.path.join(MODEL_DIR, "scaler.pkl"))
-COLUMNS_FILE = os.getenv("COLUMNS_FILE", os.path.join(MODEL_DIR, "training_columns.pkl"))
+# Gunakan path relatif dari folder project
+MODEL_FILE = os.getenv("MODEL_FILE", str(BASE_DIR / "linear_regression_model.pkl"))
+SCALER_FILE = os.getenv("SCALER_FILE", str(BASE_DIR / "scaler.pkl"))
+COLUMNS_FILE = os.getenv("COLUMNS_FILE", str(BASE_DIR / "training_columns.pkl"))
 
 regmodel = joblib.load(MODEL_FILE)
 scalar = joblib.load(SCALER_FILE)
 training_columns = joblib.load(COLUMNS_FILE)
-
 # ==========================================
 # DEBUG: PERIKSA MODEL DAN SCALER
 # ==========================================
